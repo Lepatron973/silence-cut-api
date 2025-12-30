@@ -87,14 +87,14 @@ export default class JobQueueService {
 
             // Merge close silences to reduce segment count
             silences = this.videoProcessor.mergeSilences(silences, 2.0)
-
+            const maxSilences = parseInt(env.get('MAX_SILENCES', '10'))
             // Limit to max 10 silences for performance (keep the longest ones)
-            if (silences.length > 10) {
+            if (silences.length > maxSilences) {
                 silences = silences
                     .sort((a, b) => (b.end - b.start) - (a.end - a.start)) // Sort by duration desc
-                    .slice(0, 10) // Keep 10 longest
+                    .slice(0, maxSilences) // Keep 10 longest
                     .sort((a, b) => a.start - b.start) // Re-sort by time
-                console.log(`[Silence Limit] Reduced from ${silences.length} to 10 longest silences`)
+                console.log(`[Silence Limit] Reduced from ${silences.length} to ${maxSilences} longest silences`)
             }
 
             job.progress = 50

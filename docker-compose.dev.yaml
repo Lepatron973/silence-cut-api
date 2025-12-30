@@ -48,13 +48,17 @@ services:
       DB_USER: silencecut_admin
       DB_PASSWORD: my_silencecut_pass
       DB_DATABASE: silencecut
-      SMTP_HOST: ${SMTP_HOST}
-      SMTP_PORT: ${SMTP_PORT}
-      SMTP_USERNAME: ${SMTP_USERNAME}
-      SMTP_PASSWORD: ${SMTP_PASSWORD}
-      API_KEY_ENCRYPTION_SECRET: ${API_KEY_ENCRYPTION_SECRET}
-      PERSONAL_DATA_ENCRYPTION_SECRET: ${PERSONAL_DATA_ENCRYPTION_SECRET}
       
+      # Video Processing Configuration
+      VIDEO_STORAGE_PATH: /tmp/videos
+      VIDEO_MAX_SIZE: ${VIDEO_MAX_SIZE:-262144000}
+      # Video processing settings - Stricter = fewer silences = faster processing
+      SILENCE_THRESHOLD: ${SILENCE_THRESHOLD:--40}  # Very strict threshold (only very quiet parts)
+      SILENCE_DURATION: ${SILENCE_DURATION:-1.0}   # 3 seconds minimum (ignore short pauses)
+      FILE_CLEANUP_INTERVAL: ${FILE_CLEANUP_INTERVAL:-15}
+      MAX_CONCURRENT_JOBS: ${MAX_CONCURRENT_JOBS:-2}
+      VIDEO_MAX_SIZE_IN_MB: ${VIDEO_MAX_SIZE_IN_MB:-250}
+      MAX_SILENCES: ${MAX_SILENCES:-10}
       # CORS
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000}
       

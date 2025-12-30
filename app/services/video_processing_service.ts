@@ -33,7 +33,7 @@ export default class VideoProcessingService {
                 '-i',
                 inputPath,
                 '-af',
-                `silencedetect=noise=${this.silenceThreshold}:d=${this.silenceDuration}`,
+                `silencedetect=noise=${this.silenceThreshold.endsWith('dB') ? this.silenceThreshold : this.silenceThreshold + 'dB'}:d=${this.silenceDuration}`,
                 '-f',
                 'null',
                 '-',
