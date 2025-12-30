@@ -13,9 +13,14 @@ pipeline {
     stage('Run Tests') {
       steps {
         script {
-          echo 'Running tests using Docker CLI...'
-          // Use direct docker run since Jenkins Docker plugin is missing
-          sh 'docker run --rm -u root -v "$(pwd):/app" -w /app node:20-alpine sh -c "apk add --no-cache ffmpeg && npm ci && npm test"'
+          echo 'Building test image...'
+          // Build image up to dependencies stage to get environment ready
+          sh 'docker build --target dependencies -t silencecut-test .'
+          
+          echo 'Running tests...'
+          // Run tests inside the container. 
+          // We copy .env.example to .env to ensure required env vars (like APP_KEY) are present.
+          sh 'docker run --rm silencecut-test sh -c "cp .env.example .env && npm test"'
         }
       }
     }
