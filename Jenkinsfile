@@ -19,8 +19,8 @@ pipeline {
           
           echo 'Running tests...'
           // Run tests inside the container. 
-          // We copy .env.example to .env to ensure required env vars (like APP_KEY) are present.
-          sh 'docker run --rm silencecut-test sh -c "cp .env.example .env && npm test"'
+          // We copy .env.example to .env and append a dummy APP_KEY for validation.
+          sh 'docker run --rm silencecut-test sh -c "cp .env.example .env && echo \'APP_KEY=cR37XUHJB-tu7jqlVrEGjY4Sbe3lQsB\' >> .env && npm test"'
         }
       }
     }
