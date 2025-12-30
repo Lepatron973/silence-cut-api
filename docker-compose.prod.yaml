@@ -1,0 +1,96 @@
+
+services:
+  silencecut-api:
+    image: visionugc.fr/silencecut-api:latest
+    container_name: silencecut-api
+    restart: unless-stopped
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.silencecut-api.rule=Host(`yanacode.fr`) && PathPrefix(`/silencecutapi`)"
+      - "traefik.http.routers.silencecut-api.entrypoints=websecure"
+      - "traefik.http.routers.silencecut-api.tls=true"
+      - "traefik.http.routers.silencecut-api.tls.certresolver=letsencrypt"
+      - "traefik.http.services.silencecut-api.loadbalancer.server.port=3333"
+      # Middleware pour supprimer le préfixe /silencecutapi
+      - "traefik.http.middlewares.silencecut-api-stripprefix.stripprefix.prefixes=/silencecutapi"
+      - "traefik.http.routers.silencecut-api.middlewares=silencecut-api-stripprefix"
+    environment:
+      NODE_ENV: production
+      PORT: 3333
+      HOST: 0.0.0.0
+      APP_KEY: ${APP_KEY}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      # Database
+      DB_HOST: ${DB_HOST:-silencecut-db}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_USER: ${DB_USER:-silencecut_admin}
+      DB_PASSWORD: ${DB_PASSWORD:-my_silencecut_pass}
+      DB_DATABASE: ${DB_DATABASE:-silencecut}
+      APP_VERSION: ${APP_VERSION:-1.0.0}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USERNAME: ${SMTP_USERNAME}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      API_KEY_ENCRYPTION_SECRET: ${API_KEY_ENCRYPTION_SECRET}
+      PERSONAL_DATA_ENCRYPTION_SECRET: ${PERSONAL_DATA_ENCRYPTION_SECRET}
+      GOOGLE_PLACE_API_KEY: ${GOOGLE_PLACE_API_KEY}
+      GEMINI_API_KEY: ${GEMINI_API_KEY}
+      GOOGLE_CLOUD_STORAGE: ${GOOGLE_CLOUD_STORAGE}
+      GCS_PROJECT_ID: ${GCS_PROJECT_ID}
+      GCS_BUCKET_NAME: ${GCS_BUCKET_NAME}
+      GCS_KEY_FILE: ${GCS_KEY_FILE}
+      PERPLEXITY_API_KEY: ${PERPLEXITY_API_KEY}
+      GROQ_API_KEY: ${GROQ_API_KEY}
+      GCS_CREDENTIALS: ${GCS_CREDENTIALS}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.0-flash-exp}
+      
+      # Frontend URL & Mail
+      FRONTEND_URL: ${FRONTEND_URL:-https://silencecut.com}
+      PRODUCT_ID_1: ${PRODUCT_ID_1}
+      PRICE_ID_1: ${PRICE_ID_1}
+      PRODUCT_ID_2: ${PRODUCT_ID_2}
+      PRICE_ID_2: ${PRICE_ID_2}
+      PRODUCT_ID_3: ${PRODUCT_ID_3}
+      PRICE_ID_3: ${PRICE_ID_3}
+      PRODUCT_ID_4: ${PRODUCT_ID_4}
+      PRICE_ID_4: ${PRICE_ID_4}
+      MAILTRAP_TOKEN: ${MAILTRAP_TOKEN}
+      MAIL_FROM_ADDRESS: ${MAIL_FROM_ADDRESS}
+      MAIL_FROM_NAME: ${MAIL_FROM_NAME}
+
+      # Stripe
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      STRIPE_PUBLISHABLE_KEY: ${STRIPE_PUBLISHABLE_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+
+      # CORS
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://silencecut.com,http://localhost:3000}
+
+      # Session
+      SESSION_DRIVER: cookie
+
+      TZ: Europe/Paris
+    depends_on:
+      - silencecut-db
+    networks:
+      - web
+
+  silencecut-db:
+    image: postgres:15
+    container_name: silencecut-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_DATABASE:-silencecut}
+      POSTGRES_USER: ${DB_USER:-silencecut_admin}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-my_silencecut_pass}
+    volumes:
+      - silencecut_db_data:/var/lib/postgresql/data
+    networks:
+      - web
+
+volumes:
+  silencecut_db_data:
+
+networks:
+  web:
+    external: true

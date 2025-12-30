@@ -1,0 +1,28 @@
+# Development Dockerfile with FFmpeg
+FROM node:20.19.6-bookworm
+
+# Install FFmpeg and other dependencies
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create app directory
+WORKDIR /app
+
+# Create video storage directory
+RUN mkdir -p /tmp/videos && chmod 777 /tmp/videos
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy application code
+COPY . .
+
+# Expose port
+EXPOSE 3333
+
+# Start development server
+CMD ["npm", "run", "dev"]

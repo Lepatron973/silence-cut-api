@@ -1,0 +1,113 @@
+# Product Requirements Document (PRD)
+# Projet : SilenceRemover MVP (Web)
+
+**Version :** 1.0
+**Date :** 21/12/2023
+**Type :** MVP (Minimum Viable Product)
+**Architecture :** Server-Side / Docker
+**Priorité :** Vitesse & Simplicité
+
+---
+
+## 1. Résumé Exécutif
+Création d'une application web minimaliste permettant aux créateurs de contenu de supprimer automatiquement les silences d'une vidéo (Jump Cut). L'objectif est de fournir un outil gratuit, financé par la publicité, avec une exécution ultra-rapide sans perte de qualité visuelle (Smart Rendering / Stream Copy).
+
+---
+
+## 2. Parcours Utilisateur (User Flow)
+
+### Phase 1 : Accueil & Upload
+1. L'utilisateur arrive sur une page d'accueil épurée.
+2. Zone centrale : "Drag & Drop" ou bouton "Choisir un fichier".
+3. L'utilisateur sélectionne une vidéo.
+4. Le système valide instantanément les contraintes (Format, Poids).
+
+### Phase 2 : Traitement (Le "Monetization Time")
+1. Une barre de progression s'affiche : "Upload en cours..." puis "Nettoyage rapide...".
+2. **Affichage Publicitaire :** Des bannières publicitaires sont visibles autour de la zone de chargement pendant l'attente.
+3. Le traitement s'effectue côté serveur.
+
+### Phase 3 : Récupération & Fin
+1. Le traitement termine. Affichage du résultat : "Vidéo prête ! (Temps gagné : X secondes)".
+2. Bouton principal : "Télécharger la vidéo".
+3. Bouton secondaire : "Traiter une nouvelle vidéo".
+4. La vidéo est supprimée du serveur après un délai de sécurité (15 min).
+
+---
+
+## 3. Spécifications Fonctionnelles
+
+### 3.1 Gestion des Entrées (Input)
+* **Format accepté :** `.mp4` (Codec H.264 / AAC) uniquement pour ce MVP.
+* **Taille maximale :** 250 Mo (Soft limit).
+* **Durée maximale :** 10 minutes (Soft limit).
+* **Validation :** Rejet immédiat si le fichier dépasse les limites ou n'est pas un MP4 valide.
+
+### 3.2 Cœur du Réacteur (Algorithme de Silence)
+* **Moteur :** FFmpeg backend.
+* **Détection :** Seuil de silence fixé à `-35dB` (valeur empirique standard).
+* **Durée minimale de silence :** `0.5s` (pour éviter de couper les respirations naturelles courtes).
+* **Stratégie de Coupe (Option A - Speed Mode) :**
+    * Utilisation du flag `-c copy` (Stream Copy).
+    * Découpage sur les **Keyframes** les plus proches des silences détectés.
+    * **Avantage :** Vitesse extrême (pas de ré-encodage CPU), qualité vidéo source préservée à 100%.
+    * **Inconvénient accepté :** Précision de la coupe dépendante des Keyframes (peut laisser +/- 0.5s de marge).
+
+### 3.3 Gestion des Sorties (Output)
+* Nom du fichier : `[nom_origine]_cut.mp4`.
+* Métadonnées : Nettoyées.
+
+### 3.4 Cycle de vie des données (Data Privacy)
+* **Règle de suppression :** Tout fichier (source et traité) doit être supprimé 15 minutes après son upload (Cron Job).
+* **Endpoint de suppression forcée :** Si l'utilisateur clique sur "Recommencer", les fichiers précédents liés à sa session sont supprimés immédiatement.
+
+---
+
+## 4. Architecture Technique
+
+### 4.1 Infrastructure
+* **Hébergement :** VPS (Virtual Private Server).
+* **OS :** Linux (Ubuntu/Debian).
+* **Conteneurisation :** Docker + Docker Compose.
+
+### 4.2 Stack Technologique
+* **Frontend :** HTML5 / TailwindCSS / JavaScript Vanilla (ou Vue.js léger). Pas de framework lourd nécessaire.
+* **Backend API :** Python (FastAPI). Choisi pour sa performance asynchrone et sa rapidité de développement.
+* **Processing Vidéo :** FFmpeg (installé dans le Dockerfile).
+* **Queue de tâches (Optionnel mais recommandé) :** Redis Queue (RQ) ou background tasks natifs de FastAPI (si trafic faible au début).
+
+### 4.3 Structure Docker suggérée
+* `Service Web` : Gère l'upload, sert la page HTML, renvoie le lien de téléchargement.
+* `Volume partagé` : Dossier `/tmp/videos` monté en RAM (tmpfs) si possible pour accélérer les I/O, ou sur disque SSD.
+
+---
+
+## 5. Exigences Non-Fonctionnelles (Contraintes)
+
+* **Performance :** Le temps de traitement (hors upload) ne doit pas dépasser 50% de la durée de la vidéo (ex: une vidéo de 10 min doit être traitée en moins de 5 min). Avec l'Option A, on vise moins de 30 secondes.
+* **Sécurité :**
+    * Renommage des fichiers en UUID (ex: `a1b2-c3d4.mp4`) pour éviter les collisions et les injections de noms de fichiers.
+    * Pas de base de données persistante (Stateless).
+* **Scalabilité :** Le serveur doit pouvoir rejeter les nouvelles requêtes (Code 503) si la charge CPU dépasse 90%.
+
+---
+
+## 6. Interface Utilisateur (Wireframe Simplifié)
+
+* **Header :** Logo + Slogan ("Cut Silence Fast").
+* **Main Container :**
+    * État 1 : Zone de Drop (Gris clair, icône upload).
+    * État 2 : Progress Bar (Verte, animée) + Texte "Analyse en cours...".
+    * État 3 : Bouton "Télécharger" (Gros, Bleu) + Stats ("-34 sec supprimées").
+* **Sidebar Droite/Gauche :** Espaces réservés pour Google AdSense / Bannières.
+* **Footer :** Mentions légales + "Fichiers supprimés automatiquement".
+
+---
+
+## 7. Risques et Mitigations
+
+| Risque | Impact | Mitigation |
+| :--- | :--- | :--- |
+| **Désynchronisation Audio/Vidéo** | Moyen | Le mode `-c copy` de FFmpeg est généralement sûr, mais peut être capricieux sur des MP4 corrompus. Solution : Valider l'intégrité avant traitement. |
+| **Surcharge VPS** | Haut | Limiter à 1 ou 2 traitements simultanés (Semaphore). Mettre les autres en file d'attente. |
+| **Coupes trop brutales** | Moyen | Ajouter un "padding" automatique de 0.1s autour des zones de parole conservées. |
