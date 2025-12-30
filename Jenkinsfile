@@ -13,15 +13,9 @@ pipeline {
     stage('Run Tests') {
       steps {
         script {
-          docker.image('node:20-alpine').inside('-u root') {
-            echo 'Installing dependencies...'
-            sh 'apk add --no-cache ffmpeg'
-            echo 'Running tests...'
-            sh '''
-              npm ci
-              npm test
-            '''
-          }
+          echo 'Running tests using Docker CLI...'
+          // Use direct docker run since Jenkins Docker plugin is missing
+          sh 'docker run --rm -u root -v "$(pwd):/app" -w /app node:20-alpine sh -c "apk add --no-cache ffmpeg && npm ci && npm test"'
         }
       }
     }
