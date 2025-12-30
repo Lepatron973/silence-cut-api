@@ -11,21 +11,17 @@ pipeline {
   stages {
 
     stage('Run Tests') {
-      agent {
-        docker {
-          image 'node:20-alpine'
-          args '-u root'
-        }
-      }
       steps {
         script {
-          echo 'Installing dependencies...'
-          sh 'apk add --no-cache ffmpeg'
-          echo 'Running tests...'
-          sh '''
-            npm ci
-            npm test
-          '''
+          docker.image('node:20-alpine').inside('-u root') {
+            echo 'Installing dependencies...'
+            sh 'apk add --no-cache ffmpeg'
+            echo 'Running tests...'
+            sh '''
+              npm ci
+              npm test
+            '''
+          }
         }
       }
     }
