@@ -64,7 +64,7 @@ test.group('FileStorageService', (group) => {
         assert.isBelow(age, 1) // Should be less than 1 minute old
     })
 
-    test('should cleanup old files', async ({ assert }) => {
+    test('should cleanup old files', async () => {
         // This test would require mocking file timestamps
         // or waiting for actual time to pass
     }).skip()

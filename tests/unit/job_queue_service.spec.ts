@@ -38,7 +38,7 @@ test.group('JobQueueService', (group) => {
         assert.isNotNull(status)
         assert.equal(status?.videoId, videoId)
         // Status can be 'queued' or 'processing' depending on timing
-        assert.include(['queued', 'processing'], status?.status)
+        assert.include(['queued', 'processing'], status ? status.status : '')
         assert.properties(status!, ['videoId', 'status', 'progress', 'message'])
     })
 

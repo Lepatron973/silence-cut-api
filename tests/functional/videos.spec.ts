@@ -45,7 +45,7 @@ test.group('Videos API - Upload', (group) => {
         assert.include([422, 500], response.status())
     })
 
-    test('should reject files larger than 250MB', async ({ client }) => {
+    test('should reject files larger than 250MB', async () => {
         // Skipped - would require creating a 250MB+ file
     }).skip()
 
