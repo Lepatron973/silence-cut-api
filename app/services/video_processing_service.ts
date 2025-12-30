@@ -146,6 +146,20 @@ export default class VideoProcessingService {
         // Build segments to keep (non-silent parts)
         const segments = this.buildKeepSegments(silences, metadata.duration)
 
+        // If no segments remain (entire video is silence), just copy the file
+        if (segments.length === 0) {
+            console.log('[Processing] Entire video detected as silence. Keeping original.')
+            await this.copyFile(inputPath, outputPath)
+            return {
+                outputPath,
+                originalDuration: metadata.duration,
+                finalDuration: metadata.duration,
+                timeSaved: 0,
+                percentageSaved: 0,
+                silencesRemoved: silences.length,
+            }
+        }
+
         // Create filter complex for cutting
         const filterComplex = this.buildFilterComplex(segments)
 
