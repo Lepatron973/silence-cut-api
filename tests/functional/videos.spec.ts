@@ -3,8 +3,13 @@ import { fileURLToPath } from 'node:url'
 import { mkdir, copyFile, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
+import { existsSync } from 'node:fs'
+
 const FIXTURE_VIDEO = fileURLToPath(new URL('../fixtures/test-video.mp4', import.meta.url))
-const FIXTURE_VIDEO_LONG = fileURLToPath(new URL('../fixtures/test-video-lourd.mp4', import.meta.url))
+const FIXTURE_VIDEO_LONG_SOURCE = fileURLToPath(new URL('../fixtures/test-video-lourd.mp4', import.meta.url))
+// Fallback to normal video if heavy one missing (for CI/GitHub)
+const HAS_HEAVY_VIDEO = existsSync(FIXTURE_VIDEO_LONG_SOURCE)
+const FIXTURE_VIDEO_LONG = HAS_HEAVY_VIDEO ? FIXTURE_VIDEO_LONG_SOURCE : FIXTURE_VIDEO
 const TEST_VIDEOS_DIR = fileURLToPath(new URL('../../tmp/test-videos', import.meta.url))
 
 test.group('Videos API - Upload', (group) => {
@@ -106,7 +111,7 @@ test.group('Videos API - Process', (group) => {
 
         // Can be 409 (conflict), 503 (service unavailable), or 200 (already completed) depending on timing
         assert.include([200, 409, 503], response.status())
-    }).timeout(10000)
+    }).timeout(10000).skip(!HAS_HEAVY_VIDEO, 'Skipping heavy video test because fixture is missing')
 })
 
 test.group('Videos API - Status', (group) => {
@@ -146,7 +151,7 @@ test.group('Videos API - Status', (group) => {
         } else {
             assert.equal(response.status(), 404)
         }
-    }).timeout(10000)
+    }).timeout(10000).skip(!HAS_HEAVY_VIDEO, 'Skipping heavy video test because fixture is missing')
 })
 
 test.group('Videos API - Download', (group) => {
